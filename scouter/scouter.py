@@ -31,9 +31,16 @@ class Scouter:
 
 
     @commands.command(pass_context=True, name='scout', aliases={'awd'})
-    async def _scout(self, ctx, map_or_tier, node, champ_hp, champ_atk):
+    async def _scout(self, ctx, map_or_tier, node, champ_hp, champ_atk, champ_filter=None):
         '''Scouter Lens Bot command'''
         data = {'difficulty': map_or_tier, 'node': node, 'hp': champ_hp, 'atk': champ_atk}
+        if champ_filter:
+            star_filter, class_filter = await self.parse_champ_filter(champ_filter)
+            if star_filter:
+                data['star_filter'] = star_filter
+            if class_filter:
+                data['class_filter'] = class_filter
+
         response = await self.send_request(data=data)
         if 'error' in response:
             result_em = discord.Embed(color=discord.Color.red(), title='Scout Error')
@@ -75,6 +82,11 @@ class Scouter:
             champ[2:-2],
             champ[-1]
         )
+
+    async def parse_champ_filter(self, champ_filter):
+        star_filter = ''.join(ch for ch in champ_filter if ch.isdigit())
+        champ_filter = ''.join(ch for ch in champ_filter if ch.isalpha())
+        return star_filter, champ_filter
 
 
 def setup(bot):
