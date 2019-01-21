@@ -6,7 +6,8 @@ from discord.ext import commands
 import requests
 
 
-API_URL = os.environ['SCOUTER_LENS_BOT_API_URL']
+AWD_API_URL = os.environ['SCOUTER_LENS_BOT_AWD_API_URL']
+MAS_API_URL = os.environ['SCOUTER_LENS_BOT_MAS_API_URL']
 
 logger = logging.getLogger('red.mcoc.scouter')
 logger.setLevel(logging.INFO)
@@ -41,7 +42,7 @@ class Scouter:
             if class_filter:
                 data['class_filter'] = class_filter
 
-        response = await self.send_request(data=data)
+        response = await self.send_request(AWD_API_URL, data=data)
         if 'error' in response:
             result_em = discord.Embed(color=discord.Color.red(), title='Scout Error')
             result_em.add_field(name='Error', value=str(response['error']))
@@ -63,14 +64,12 @@ class Scouter:
         await self.bot.say(embed=result_em)
 
 
-    async def send_request(self, data):
+    async def send_request(self, url, data):
         ''' Send request to service'''
-        response = requests.post(API_URL, json=data)
+        response = requests.post(url, json=data)
         if response.status_code == 200 or response.status_code == 400:
             return response.json()
         else:
-            print(response.status_code)
-            print(response.json())
             return {'error': 'unknown response'}
 
 
@@ -87,6 +86,37 @@ class Scouter:
         star_filter = ''.join(ch for ch in champ_filter if ch.isdigit())
         champ_filter = ''.join(ch for ch in champ_filter if ch.isalpha())
         return star_filter, champ_filter
+
+
+    @commands.command(pass_context=True, name='mas')
+    async def _mas(self, ctx, base_hp, profile_hp, base_atk, profile_atk):
+        ''' Find player masteries'''
+        data = {'base_hp': base_hp, 'profile_hp': profile_hp, 'base_atk': base_atk, 'profile_atk': profile_atk}
+        response = await self.send_request(MAS_API_URL, data=data)
+        if 'error' in response:
+            result_em = discord.Embed(color=discord.Color.red())
+            result_em.add_field(name='Error', value=str(response['error']))
+        else:
+            result_em = discord.Embed(color=discord.Color.green())
+            if len(response) > 0:
+                masteries = ''
+                for x in response:
+                    masteries += 'vit:{0} gvit:{1} str:{2} gstr:{3} gc:{4} lcde:{5}'.format(
+                        x["v"],
+                        x["gv"],
+                        x["s"],
+                        x["gs"],
+                        x["gc"],
+                        x["lcde"]
+                    )
+            else:
+                masteries = 'No matches'
+            result_em.add_field(
+                name='Mastery Results',
+                value=masteries
+            )
+        
+        await self.bot.say(embed=result_em)
 
 
 def setup(bot):
