@@ -15,6 +15,16 @@ logger.setLevel(logging.INFO)
 class Scouter:
     '''ScouterLensBot class'''
 
+    class_emoji = {
+        'superior':'<:all2:339511715920084993>',
+        'cosmic':'<:cosmic2:339511716104896512>',
+        'tech':'<:tech2:339511716197171200>',
+        'mutant':'<:mutant2:339511716201365514>',
+        'skill':'<:skill2:339511716549230592>',
+        'science':'<:science2:339511716029267969>',
+        'mystic':'<:mystic2:339511716150771712>'
+    }
+
 
     def __init__(self, bot):
         self.bot = bot
@@ -31,8 +41,9 @@ class Scouter:
         else:
             result_em = discord.Embed(color=discord.Color.green(), title='Scout Results')
             for x in response:
+                champ_name = await self.format_champ(x['champ'], x['class'])
                 result_em.add_field(
-                    name=x['champ'],
+                    name=champ_name,
                     value='vit:{0} gvit:{1} str:{2} gstr:{3} gc:{4} lcde:{5}'.format(
                         x["masteries"]["v"],
                         x["masteries"]["gv"],
@@ -54,6 +65,16 @@ class Scouter:
             print(response.status_code)
             print(response.json())
             return {'error': 'unknown response'}
+
+
+    async def format_champ(self, champ, champ_class):
+        ''' Format champ name for display '''
+        return '{0} {1}★ {2} r{3}'.format(
+            self.class_emoji[champ_class],
+            champ[0],
+            champ[2:-2],
+            champ[-1]
+        )
 
 
 def setup(bot):
